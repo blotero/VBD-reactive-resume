@@ -91,7 +91,12 @@ export class AuthService {
     const user = await this.userService.findOneById(payload.id);
     const storedRefreshToken = user.secrets?.refreshToken;
 
-    if (!storedRefreshToken || storedRefreshToken !== token) throw new ForbiddenException();
+    if (!storedRefreshToken) throw new ForbiddenException();
+
+    if (storedRefreshToken !== token) {
+      await this.setRefreshToken(user.email, null);
+      throw new ForbiddenException();
+    }
 
     if (!user.twoFactorEnabled) return user;
 
