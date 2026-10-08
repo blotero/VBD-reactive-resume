@@ -171,6 +171,14 @@ export class AuthController {
     return this.handleAuthenticationResponse(user, response, true);
   }
 
+  @HttpCode(200)
+  @Post("refresh/token")
+  async refreshWithBearer(@Body("refreshToken") token: string) {
+    const user = await this.authService.validateBearerRefreshToken(token);
+
+    return this.exchangeToken(user.id, user.email, true);
+  }
+
   @Patch("password")
   @UseGuards(TwoFactorGuard)
   async updatePassword(

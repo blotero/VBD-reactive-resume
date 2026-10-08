@@ -18,7 +18,7 @@ import { authenticator } from "otplib";
 import { Config } from "../config/schema";
 import { MailService } from "../mail/mail.service";
 import { UserService } from "../user/user.service";
-import { Payload } from "./utils/payload";
+import { Payload, payloadSchema } from "./utils/payload";
 
 @Injectable()
 export class AuthService {
@@ -96,6 +96,25 @@ export class AuthService {
     if (!user.twoFactorEnabled) return user;
 
     if (payload.isTwoFactorAuth) return user;
+  }
+
+  async validateBearerRefreshToken(token: string) {
+    let payload: Payload;
+
+    try {
+      const decoded = await this.jwtService.verifyAsync(token, {
+        secret: this.configService.getOrThrow("REFRESH_TOKEN_SECRET"),
+      });
+      payload = payloadSchema.parse(decoded);
+    } catch {
+      throw new ForbiddenException();
+    }
+
+    const user = await this.userService.findOneById(payload.id);
+
+    if (user.twoFactorEnabled && !payload.isTwoFactorAuth) throw new ForbiddenException();
+
+    return user;
   }
 
   async register(registerDto: RegisterDto): Promise<UserWithSecrets> {
