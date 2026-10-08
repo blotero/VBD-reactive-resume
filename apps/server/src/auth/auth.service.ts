@@ -110,9 +110,9 @@ export class AuthService {
       throw new ForbiddenException();
     }
 
-    const user = await this.userService.findOneById(payload.id);
+    const user = await this.validateRefreshToken(payload, token);
 
-    if (user.twoFactorEnabled && !payload.isTwoFactorAuth) throw new ForbiddenException();
+    if (!user) throw new ForbiddenException();
 
     return user;
   }
